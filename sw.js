@@ -1,5 +1,4 @@
-const CACHE_NAME = 'pyscript-offline-v2';
-// Danh sách các file cần trình duyệt tự động lưu lại để chạy offline
+const CACHE_NAME = 'gcp-management-offline-v1';
 const ASSETS = [
   './',
   './index.html',
@@ -7,10 +6,10 @@ const ASSETS = [
   './main.py',
   'https://pyscript.net/releases/2024.1.1/core.js',
   'https://pyscript.net/releases/2024.1.1/core.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
 ];
 
-// Cài đặt và tải các file vào bộ nhớ đệm
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -19,7 +18,6 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// Kích hoạt cấu hình mới
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -34,7 +32,6 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Xử lý khi mất mạng: Nếu có mạng thì lấy file mới, mất mạng thì lấy file trong bộ nhớ đệm ra sài
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {

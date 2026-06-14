@@ -1,68 +1,54 @@
 from pyscript import window, document
 from pyodide.ffi import create_proxy
 import json
+from datetime import datetime
 
-# Mảng lưu trữ danh sách sản phẩm và đơn hàng
 products = []
 orders = []
 deleted_products = []
 
-# Biến toàn cục tạm thời lưu lại sản phẩm nào đang được chọn thao tác trong Modal
 current_modal_index = -1
-current_modal_action = "" # "sell" hoặc "delete"
+current_modal_action = ""
 
 def load_data():
-    """Tải dữ liệu từ bộ nhớ cục bộ của trình duyệt"""
     global products, orders, deleted_products
-    
     orders_data = window.localStorage.getItem('pyscript_orders_db')
-    if orders_data:
-        orders = json.loads(orders_data)
-    else:
-        orders = []
-
+    orders = json.loads(orders_data) if orders_data else []
     deleted_data = window.localStorage.getItem('pyscript_deleted_db')
-    if deleted_data:
-        deleted_products = json.loads(deleted_data)
-    else:
-        deleted_products = []
+    deleted_products = json.loads(deleted_data) if deleted_data else []
     
     data = window.localStorage.getItem('pyscript_products_db')
     if data:
         products = json.loads(data)
     else:
         products = [
-            {"name": "Laptop Gaming ASUS ROG", "price": 35000000, "quantity": 5},
-            {"name": "Bàn phím cơ Keychron Q1", "price": 4500000, "quantity": 12},
-            {"name": "Chuột Logitech G Pro X", "price": 2800000, "quantity": 8}
+            {"name": "Điện thoại iPhone 15 Pro Max 256GB", "price": 29500000, "quantity": 14},
+            {"name": "Máy tính bảng iPad Air 5 M1 Wifi", "price": 14200000, "quantity": 8},
+            {"name": "Laptop ASUS ROG Strix G16 Gaming", "price": 34800000, "quantity": 5}
         ]
         save_data()
 
 def save_data():
-    """Lưu trữ dữ liệu vào localStorage"""
     window.localStorage.setItem('pyscript_products_db', json.dumps(products))
     window.localStorage.setItem('pyscript_orders_db', json.dumps(orders))
     window.localStorage.setItem('pyscript_deleted_db', json.dumps(deleted_products))
 
 def format_currency(value):
-    """Định dạng số thành tiền tệ VNĐ"""
     return "{:,.0f} đ".format(value).replace(",", ".")
 
 def handle_search_product(event):
-    """Hàm trung gian xử lý tìm kiếm sản phẩm kho hàng"""
-    render_table()
+    render_tables()
 
 def handle_search_order(event):
-    """Hàm trung gian xử lý tìm kiếm đơn hàng"""
     render_orders_table()
 
-def render_table():
-    """Hiển thị dữ liệu ra bảng HTML"""
-    tbody = document.getElementById("product-tbody")
-    if not tbody:
-        return
-    tbody.innerHTML = ""
-    
+def render_tables():
+    tbody_web = document.getElementById("product-tbody")
+    tbody_inv = document.getElementById("inventory-tbody")
+    if not tbody_web or not tbody_inv: return
+        
+    tbody_web.innerHTML = ""
+    tbody_inv.innerHTML = ""
     search_input = document.getElementById("search-input")
     query = search_input.value.strip().lower() if search_input else ""
     
@@ -70,358 +56,190 @@ def render_table():
     total_value = 0
     
     for i, p in enumerate(products):
-        if query and query not in p['name'].lower():
-            continue
-            
-        tr = document.createElement("tr")
+        if query and query not in p['name'].lower(): continue
         subtotal = float(p['price']) * int(p['quantity'])
         total_count += int(p['quantity'])
         total_value += subtotal
         
-        cols_data = [
-            str(i + 1),
-            p['name'],
-            format_currency(float(p['price'])),
-            str(p['quantity']),
-            format_currency(subtotal)
-        ]
+        # BẢNG 2: MẶT HÀNG WEB
+        tr_web = document.createElement("tr")
+        tr_web.innerHTML = f"<td>{i+1}</td><td class='fw-semibold'>{p['name']}</td><td class='text-blue fw-bold'>{format_currency(float(p['price']))}</td>"
         
-        for idx, text in enumerate(cols_data):
-            td = document.createElement("td")
-            td.textContent = text
-            if idx == 4:
-                td.className = "highlight-text"
-            tr.appendChild(td)
-            
-        td_action = document.createElement("td")
-        action_div = document.createElement("div")
-        action_div.className = "action-buttons"
+        td_status = document.createElement("td")
+        td_status.innerHTML = f"<span class='badge {'bg-success' if p['quantity'] > 0 else 'bg-danger'}'>{'Đang bày bán' if p['quantity'] > 0 else 'Hết hàng'}</span>"
+        tr_web.appendChild(td_status)
         
-        # Nút Bán
-        sell_btn = document.createElement("button")
-        sell_btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg> Bán'
-        sell_btn.className = "sell-btn"
-        if p['quantity'] <= 0:
-            sell_btn.disabled = True
-            
-        def make_sell_handler(index):
-            def handler(event):
-                sell_product(index)
-            return create_proxy(handler)
-            
-        sell_btn.addEventListener("click", make_sell_handler(i))
+        td_act = document.createElement("td")
+        div_act = document.createElement("div")
+        div_act.className = "action-buttons-row"
         
-        # Nút Kiểm kê
-        edit_btn = document.createElement("button")
-        edit_btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg> Kiểm kê'
-        edit_btn.className = "edit-btn"
+        btn_sell = document.createElement("button")
+        btn_sell.innerHTML = "<i class='fa-solid fa-cart-plus'></i> Đặt"
+        btn_sell.className = "btn-gcp-serve"
+        if p['quantity'] <= 0: btn_sell.disabled = True
         
-        def make_edit_handler(index):
-            def handler(event):
-                edit_product(index)
-            return create_proxy(handler)
-            
-        edit_btn.addEventListener("click", make_edit_handler(i))
+        def make_sell_closure(idx):
+            return create_proxy(lambda e: show_quantity_modal(idx, "sell"))
+        btn_sell.addEventListener("click", make_sell_closure(i))
         
-        # Nút Xóa
-        del_btn = document.createElement("button")
-        del_btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg> Xóa'
-        del_btn.className = "delete-btn"
+        btn_del = document.createElement("button")
+        btn_del.innerHTML = "<i class='fa-solid fa-trash-can'></i> Hủy"
+        btn_del.className = "btn-gcp-cancel"
         
-        def make_delete_handler(index):
-            def handler(event):
-                delete_product(index)
-            return create_proxy(handler)
-            
-        del_btn.addEventListener("click", make_delete_handler(i))
+        def make_del_closure(idx):
+            return create_proxy(lambda e: show_quantity_modal(idx, "delete"))
+        btn_del.addEventListener("click", make_del_closure(i))
         
-        action_div.appendChild(sell_btn)
-        action_div.appendChild(edit_btn)
-        action_div.appendChild(del_btn)
-        td_action.appendChild(action_div)
-        tr.appendChild(td_action)
-        tbody.appendChild(tr)
+        div_act.appendChild(btn_sell)
+        div_act.appendChild(btn_del)
+        td_act.appendChild(div_act)
+        tr_web.appendChild(td_act)
+        tbody_web.appendChild(tr_web)
+        
+        # BẢNG 3: TỒN KHO THỰC TẾ
+        tr_inv = document.createElement("tr")
+        tr_inv.innerHTML = f"<td>{i+1}</td><td>{p['name']}</td><td class='fw-bold' style='color:{'#ef4444' if p['quantity']<=3 else 'inherit'}'>{p['quantity']} cái</td><td class='text-purple'>{format_currency(subtotal)}</td>"
+        
+        td_inv_check = document.createElement("td")
+        div_inv_act = document.createElement("div")
+        div_inv_act.className = "action-buttons-row"
+        
+        btn_check = document.createElement("button")
+        btn_check.innerHTML = "<i class='fa-solid fa-clipboard-check'></i> Kiểm kê"
+        btn_check.className = "btn-gcp-pay"
+        btn_check.addEventListener("click", create_proxy(lambda e, idx=i: edit_inventory_product(idx)))
+        
+        btn_inv_del = document.createElement("button")
+        btn_inv_del.innerHTML = "<i class='fa-solid fa-trash-can'></i> Hủy kho"
+        btn_inv_del.className = "btn-gcp-cancel"
+        btn_inv_del.addEventListener("click", make_del_closure(i))
+        
+        div_inv_act.appendChild(btn_check)
+        div_inv_act.appendChild(btn_inv_del)
+        td_inv_check.appendChild(div_inv_act)
+        tr_inv.appendChild(td_inv_check)
+        tbody_inv.appendChild(tr_inv)
         
     document.getElementById("total-count").textContent = str(total_count)
     document.getElementById("total-value").textContent = format_currency(total_value)
     
-    total_revenue = sum(o['total'] for o in orders if o['id'].startswith('DH'))
-    rev_element = document.getElementById("total-revenue")
-    if rev_element:
-        rev_element.textContent = format_currency(total_revenue)
+    total_revenue = sum(float(o['total']) for o in orders if o['id'].startswith('DH'))
+    if document.getElementById("total-revenue"):
+        document.getElementById("total-revenue").textContent = format_currency(total_revenue)
 
-def edit_product(index):
-    """Sửa số lượng thực tế (Kiểm kê)"""
+def edit_inventory_product(index):
     p = products[index]
     old_qty = p['quantity']
-    
-    new_qty_str = window.prompt(f"Kiểm kê: Nhập số lượng thực tế của '{p['name']}' trong kho:", str(old_qty))
+    new_qty_str = window.prompt(f"Nhập số lượng thực tế tại kho của '{p['name']}':", str(old_qty))
     if new_qty_str is not None:
         try:
             new_qty = int(new_qty_str.strip())
-            if new_qty < 0:
-                window.alert("⚠ Số lượng không thể nhỏ hơn 0!")
-                return
-                
+            if new_qty < 0: return
             diff = new_qty - old_qty
             if diff != 0:
                 p['quantity'] = new_qty
-                note = "[Dư]" if diff > 0 else "[Thiếu]"
                 orders.append({
-                    "id": f"KK{len(orders)+1:03d}",
-                    "name": f"{note} {p['name']}",
-                    "quantity": abs(diff),
-                    "price": 0,
-                    "total": 0
+                    "id": f"KK{len(orders)+1:03d}", "name": f"{'[Kiểm dư]' if diff > 0 else '[Kiểm thiếu]'} {p['name']}",
+                    "quantity": abs(diff), "price": 0, "total": 0, "time": datetime.now().strftime("%H:%M %d/%m/%y")
                 })
-                save_data()
-                render_table()
-                render_orders_table()
-                render_reports()
-        except ValueError:
-            window.alert("⚠ Vui lòng nhập một số hợp lệ!")
+                save_data(); render_tables(); render_orders_table()
+        except ValueError: pass
 
 def show_quantity_modal(index, action):
-    """Mở hộp thoại tùy chỉnh và cấu hình nội dung tương ứng với hành động Bán/Xóa"""
     global current_modal_index, current_modal_action
-    current_modal_index = index
-    current_modal_action = action
-    
+    current_modal_index = index; current_modal_action = action
     p = products[index]
-    
-    modal_title = document.getElementById("modal-title")
-    confirm_btn = document.getElementById("modal-confirm-btn")
-    
-    if action == "sell":
-        modal_title.textContent = "📦 Xác Nhận Bán Hàng"
-        confirm_btn.textContent = "Bán Ngay"
-        confirm_btn.className = "primary-btn"
-        confirm_btn.style.background = "var(--accent)"
-    else:
-        modal_title.textContent = "🗑 Xóa Sản Phẩm Khỏi Kho"
-        confirm_btn.textContent = "Xóa Ngay"
-        confirm_btn.className = "primary-btn"
-        confirm_btn.style.background = "var(--danger)"
-
+    document.getElementById("modal-title").textContent = "🛒 Khách Đặt Hàng" if action == "sell" else "🗑 Xóa Sản Phẩm"
+    document.getElementById("modal-confirm-btn").style.backgroundColor = "#10b981" if action == "sell" else "#ef4444"
     document.getElementById("modal-p-name").textContent = p['name']
-    document.getElementById("modal-p-stock").textContent = str(p['quantity'])
-    
-    input_field = document.getElementById("modal-quantity-input")
-    input_field.value = str(p['quantity']) if action == "delete" else "1"
-    
-    confirm_btn.onclick = create_proxy(handle_modal_confirm)
+    document.getElementById("modal-p-stock").textContent = f"{p['quantity']} cái"
+    document.getElementById("modal-quantity-input").value = "1" if action == "sell" else str(p['quantity'])
+    document.getElementById("modal-confirm-btn").onclick = create_proxy(handle_modal_confirm)
     document.getElementById("quantity-modal").classList.add("open")
 
 def handle_modal_confirm(event):
-    """Xử lý sự kiện khi người dùng bấm nút Xác Nhận trên giao diện Modal mới"""
     global current_modal_index, current_modal_action
-    if current_modal_index == -1:
-        return
-        
+    if current_modal_index == -1: return
     p = products[current_modal_index]
-    input_field = document.getElementById("modal-quantity-input")
-    user_input = input_field.value.strip()
-    
     try:
-        qty = int(user_input)
-        if qty <= 0:
-            window.alert("⚠ Số lượng phải lớn hơn 0!")
-            return
-    except ValueError:
-        window.alert("⚠ Vui lòng nhập số lượng hợp lệ!")
-        return
+        qty = int(document.getElementById("modal-quantity-input").value.strip())
+        if qty <= 0: return
+    except ValueError: return
 
+    time_str = datetime.now().strftime("%H:%M %d/%m/%y")
     if current_modal_action == "sell":
-        if qty > p['quantity']:
-            window.alert(f"⚠ Không đủ hàng! Kho chỉ còn {p['quantity']} sản phẩm.")
-            return
-            
-        order_total = qty * float(p['price'])
-        orders.append({
-            "id": f"DH{len(orders)+1:03d}",
-            "name": p['name'],
-            "quantity": qty,
-            "price": float(p['price']),
-            "total": order_total
-        })
+        if qty > p['quantity']: return
+        orders.append({"id": f"DH{len(orders)+1:03d}", "name": p['name'], "quantity": qty, "price": float(p['price']), "total": qty * float(p['price']), "time": time_str})
         p['quantity'] -= qty
-
     elif current_modal_action == "delete":
         if qty >= p['quantity']:
-            deleted_products.append({
-                "name": p["name"],
-                "price": p["price"],
-                "quantity": p["quantity"]
-            })
+            deleted_products.append({"name": p["name"], "price": p["price"], "quantity": p["quantity"]})
             products.pop(current_modal_index)
         else:
-            deleted_products.append({
-                "name": p["name"],
-                "price": p["price"],
-                "quantity": qty
-            })
+            deleted_products.append({"name": p["name"], "price": p["price"], "quantity": qty})
             p["quantity"] -= qty
 
-    save_data()
-    document.getElementById("quantity-modal").classList.remove("open")
-    render_table()
-    render_orders_table()
-    render_deleted_table()
-    render_reports()
+    save_data(); document.getElementById("quantity-modal").classList.remove("open")
+    render_tables(); render_orders_table(); render_deleted_table()
 
-def sell_product(index):
-    show_quantity_modal(index, "sell")
-
-def delete_product(index):
-    show_quantity_modal(index, "delete")
+def delete_order(order_id):
+    global orders, products
+    order_to_delete = next((o for o in orders if o['id'] == order_id), None)
+    if order_to_delete:
+        if order_id.startswith('DH'):
+            for p in products:
+                if p['name'] == order_to_delete['name']: p['quantity'] += order_to_delete['quantity']; break
+        orders.remove(order_to_delete)
+        save_data(); render_tables(); render_orders_table()
 
 def render_orders_table():
-    """Hiển thị lịch sử đơn hàng"""
     tbody = document.getElementById("order-tbody")
-    if not tbody:
-        return
+    if not tbody: return
     tbody.innerHTML = ""
-    
-    search_order = document.getElementById("search-order")
-    query = search_order.value.strip().lower() if search_order else ""
+    query = document.getElementById("search-order").value.strip().lower() if document.getElementById("search-order") else ""
     
     for o in reversed(orders):
-        if query and (query not in o['id'].lower() and query not in o['name'].lower()):
-            continue
-            
+        if query and (query not in o['id'].lower() and query not in o['name'].lower()): continue
         tr = document.createElement("tr")
-        cols_data = [
-            o['id'],
-            o['name'],
-            str(o['quantity']),
-            format_currency(o['price']),
-            format_currency(o['total'])
-        ]
+        tr.innerHTML = f"<td>{o.get('time', '15:00 14/06/26')}</td><td class='fw-semibold'><span style='color:#3b82f6;'>{o['id']}</span> - {o['name']}</td><td>{o['quantity']}</td><td class='fw-bold text-green'>{format_currency(float(o['total'])) if float(o['total']) > 0 else 'Kiểm kho'}</td>"
         
-        for idx, text in enumerate(cols_data):
-            td = document.createElement("td")
-            td.textContent = text
-            if idx == 4:
-                td.className = "highlight-text"
-            tr.appendChild(td)
+        td_cancel = document.createElement("td")
+        btn_cancel = document.createElement("button")
+        btn_cancel.innerHTML = "<i class='fa-solid fa-rectangle-xmark'></i> Hủy"
+        btn_cancel.className = "btn-gcp-cancel"
+        btn_cancel.addEventListener("click", create_proxy(lambda e, oid=o['id']: delete_order(oid) if window.confirm(f"Hủy đơn {oid}?") else None))
+        td_cancel.appendChild(btn_cancel)
+        tr.appendChild(td_cancel)
         tbody.appendChild(tr)
 
 def add_product(event):
-    """Xử lý thêm sản phẩm"""
-    name_input = document.getElementById("product-name")
-    price_input = document.getElementById("product-price")
-    qty_input = document.getElementById("product-quantity")
-    error_msg = document.getElementById("error-message")
-    
-    name = name_input.value.strip()
-    price_str = price_input.value.strip()
-    qty_str = qty_input.value.strip()
-    
-    if not name or not price_str or not qty_str:
-        error_msg.textContent = "⚠ Vui lòng điền đầy đủ thông tin!"
-        return
-        
+    name = document.getElementById("product-name").value.strip()
+    price_str = document.getElementById("product-price").value.strip()
+    qty_str = document.getElementById("product-quantity").value.strip()
+    if not name or not price_str or not qty_str: return
     try:
-        price_val = float(price_str)
-        qty_val = int(qty_str)
-        if price_val < 0 or qty_val < 0:
-            error_msg.textContent = "⚠ Giá và số lượng phải lớn hơn hoặc bằng 0!"
-            return
-    except ValueError:
-        error_msg.textContent = "⚠ Giá và số lượng phải là một số hợp lệ!"
-        return
-        
-    error_msg.textContent = ""
-    products.append({
-        "name": name,
-        "price": price_val,
-        "quantity": qty_val
-    })
-    
-    name_input.value = ""
-    price_input.value = ""
-    qty_input.value = ""
-    
-    save_data()
-    render_table()
-
-def render_reports():
-    """Bảng báo cáo doanh số"""
-    tbody = document.getElementById("report-tbody")
-    if not tbody:
-        return
-    tbody.innerHTML = ""
-    
-    stats = {}
-    for o in orders:
-        if o['id'].startswith('DH'):
-            name = o['name']
-            if name not in stats:
-                stats[name] = {"sold": 0, "revenue": 0, "adjustments": 0}
-            stats[name]["sold"] += o['quantity']
-            stats[name]["revenue"] += o['total']
-        elif o['id'].startswith('KK'):
-            parts = o['name'].split("] ")
-            name = parts[1] if len(parts) > 1 else o['name']
-            if name not in stats:
-                stats[name] = {"sold": 0, "revenue": 0, "adjustments": 0}
-            stats[name]["adjustments"] += 1
-            
-    for name, data in stats.items():
-        tr = document.createElement("tr")
-        cols_data = [
-            name,
-            str(data["sold"]),
-            format_currency(data["revenue"]),
-            str(data["adjustments"])
-        ]
-        for idx, text in enumerate(cols_data):
-            td = document.createElement("td")
-            td.textContent = text
-            if idx == 2:
-                td.className = "highlight-text"
-            tr.appendChild(td)
-        tbody.appendChild(tr)
+        price_val, qty_val = float(price_str), int(qty_str)
+        if price_val < 0 or qty_val < 0: return
+    except ValueError: return
+    products.append({"name": name, "price": price_val, "quantity": qty_val})
+    document.getElementById("product-name").value = ""
+    document.getElementById("product-price").value = ""
+    document.getElementById("product-quantity").value = ""
+    save_data(); render_tables()
 
 def render_deleted_table():
-    """Bảng sản phẩm đã xóa"""
     tbody = document.getElementById("deleted-tbody")
-    if not tbody:
-        return
+    if not tbody: return
     tbody.innerHTML = ""
-
     for p in reversed(deleted_products):
         tr = document.createElement("tr")
-        data = [
-            p["name"],
-            format_currency(p["price"]),
-            str(p["quantity"])
-        ]
-        for text in data:
-            td = document.createElement("td")
-            td.textContent = text
-            tr.appendChild(td)
+        tr.innerHTML = f"<td>{p['name']}</td><td>{format_currency(float(p['price']))}</td><td>{p['quantity']} cái</td>"
         tbody.appendChild(tr)
 
 def main():
-    load_data()
-    render_table()
-    render_orders_table()
-    render_reports()
-    render_deleted_table()
-    
-    # Gắn sự kiện thêm sản phẩm một lần duy nhất
-    add_btn = document.getElementById("add-btn")
-    if add_btn:
-        add_btn.addEventListener("click", create_proxy(add_product))
-    
-    # Lắng nghe sự kiện tìm kiếm tối ưu
-    search_input = document.getElementById("search-input")
-    if search_input:
-        search_input.addEventListener("input", create_proxy(handle_search_product))
-        
-    search_order = document.getElementById("search-order")
-    if search_order:
-        search_order.addEventListener("input", create_proxy(handle_search_order))
+    load_data(); render_tables(); render_orders_table(); render_deleted_table()
+    if document.getElementById("add-btn"): document.getElementById("add-btn").addEventListener("click", create_proxy(add_product))
+    if document.getElementById("search-input"): document.getElementById("search-input").addEventListener("input", create_proxy(handle_search_product))
+    if document.getElementById("search-order"): document.getElementById("search-order").addEventListener("input", create_proxy(handle_search_order))
 
-main()
+main()              
