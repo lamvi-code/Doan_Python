@@ -1,272 +1,393 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GCP Management - Hệ Thống Quản Lý Sản Phẩm</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
-    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-    <link rel="stylesheet" href="index.css">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://pyscript.net/releases/2024.1.1/core.css"
+    />
+    <script
+      type="module"
+      src="https://pyscript.net/releases/2024.1.1/core.js"
+    ></script>
+
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
     <div class="dashboard-container">
-        
-        <aside class="sidebar-left">
-            <div class="admin-brand">
-                <div class="logo-box">
-                    <i class="fa-solid fa-layer-group"></i>
-                </div>
-                <div>
-                    <h2>GCP Menu</h2>
-                    <span class="v-tag">v1.22.1.000</span>
-                </div>
+      <aside class="sidebar-left">
+        <div class="admin-brand">
+          <div class="logo-box">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <div>
+            <h2>GCP Menu</h2>
+            <span class="v-tag">v1.22.1.000</span>
+          </div>
+        </div>
+
+        <div class="user-profile-box">
+          <div class="avatar-circle">
+            <i class="fa-solid fa-user-gear"></i>
+          </div>
+          <div class="user-info-text">
+            <p class="u-name">Admin</p>
+            <p class="u-id">ID: 202607</p>
+          </div>
+        </div>
+
+        <nav class="menu-navigation">
+          <button
+            class="menu-btn active"
+            id="btn-tab-orders"
+            onclick="switchDashboardTab('orders')"
+          >
+            <i class="fa-solid fa-cart-shopping"></i> Đơn Hàng Đặt
+          </button>
+          <button
+            class="menu-btn"
+            id="btn-tab-products"
+            onclick="switchDashboardTab('products')"
+          >
+            <i class="fa-solid fa-boxes-stacked"></i> Mặt Hàng Web
+          </button>
+          <button
+            class="menu-btn"
+            id="btn-tab-inventory"
+            onclick="switchDashboardTab('inventory')"
+          >
+            <i class="fa-solid fa-warehouse"></i> Tồn Kho Thực Tế
+          </button>
+          <button
+            class="menu-btn"
+            id="btn-tab-reports"
+            onclick="switchDashboardTab('reports')"
+          >
+            <i class="fa-solid fa-chart-pie"></i> Báo Cáo Hệ Thống
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <p>© 2026 <strong>GCP</strong></p>
+        </div>
+      </aside>
+
+      <main class="content-right">
+        <div class="top-stats-bar">
+          <div class="stat-mini-card">
+            <div class="stat-info">
+              <span class="stat-label">Tổng Mặt Hàng</span>
+              <span class="stat-value" id="total-count">0</span>
+            </div>
+            <i class="fa-solid fa-box stat-icon-bg"></i>
+          </div>
+          <div class="stat-mini-card">
+            <div class="stat-info">
+              <span class="stat-label">Doanh Tư Khác</span>
+              <span class="stat-value text-blue" id="total-value">0 đ</span>
+            </div>
+            <i class="fa-solid fa-money-bill-trend-up stat-icon-bg"></i>
+          </div>
+          <div class="stat-mini-card">
+            <div class="stat-info">
+              <span class="stat-label">Thanh Toán Điện Tử</span>
+              <span class="stat-value text-green" id="total-revenue">0 đ</span>
+            </div>
+            <i class="fa-solid fa-circle-dollar-to-slot stat-icon-bg"></i>
+          </div>
+        </div>
+
+        <section id="tab-orders" class="dashboard-section active-section">
+          <div class="management-card">
+            <div class="gcp-filter-container">
+              <div class="filter-row-inputs">
+                <select class="gcp-select">
+                  <option>Tất cả trạng thái</option>
+                </select>
+                <select class="gcp-select">
+                  <option>Tất cả danh mục</option>
+                </select>
+                <input
+                  type="text"
+                  id="search-order"
+                  placeholder="Tìm kiếm mã đơn hoặc tên sản phẩm..."
+                />
+              </div>
             </div>
 
-            <div class="user-profile-box">
-                <div class="avatar-circle">
-                    <i class="fa-solid fa-user-gear"></i>
-                </div>
-            <div class="user-info-text">
-                <p class="u-name">Admin</p> <p class="u-id">ID: 202607</p>     </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th width="15%">THỜI GIAN</th>
+                    <th width="40%">MẶT HÀNG</th>
+                    <th width="10%">SL</th>
+                    <th width="15%">ĐƠN GIÁ</th>
+                    <th width="20%">THAO TÁC</th>
+                  </tr>
+                </thead>
+                <tbody id="order-tbody"></tbody>
+              </table>
             </div>
-            
-            <nav class="menu-navigation">
-                <button class="menu-btn active" id="btn-tab-orders" onclick="switchDashboardTab('orders')">
-                    <i class="fa-solid fa-cart-shopping"></i> Đơn Hàng Đặt
-                </button>
-                <button class="menu-btn" id="btn-tab-products" onclick="switchDashboardTab('products')">
-                    <i class="fa-solid fa-boxes-stacked"></i> Mặt Hàng Web
-                </button>
-                <button class="menu-btn" id="btn-tab-inventory" onclick="switchDashboardTab('inventory')">
-                    <i class="fa-solid fa-warehouse"></i> Tồn Kho Thực Tế
-                </button>
-                <button class="menu-btn" id="btn-tab-reports" onclick="switchDashboardTab('reports')">
-                    <i class="fa-solid fa-chart-pie"></i> Báo Cáo Hệ Thống
-                </button>
-            </nav>
+          </div>
+        </section>
 
-            <div class="sidebar-footer">
-                <p>© 2026 <strong>GCP</strong></p>
+        <section id="tab-products" class="dashboard-section">
+          <div class="management-card" style="margin-bottom: 2rem">
+            <h3>
+              <i class="fa-solid fa-circle-plus color-green"></i> Tạo Mặt Hàng
+              Mới Lên Hệ Thống
+            </h3>
+            <div class="form-group">
+              <input
+                type="text"
+                id="product-name"
+                placeholder="Tên sản phẩm thiết bị cần thêm..."
+              />
+              <input
+                type="number"
+                id="product-price"
+                placeholder="Giá niêm yết (VNĐ)..."
+              />
+              <input
+                type="number"
+                id="product-quantity"
+                placeholder="Số lượng nhập kho..."
+              />
+              <button id="add-btn" class="primary-btn">
+                <i class="fa-solid fa-plus"></i> Thêm Mặt Hàng
+              </button>
             </div>
-        </aside>
+            <div id="error-message" class="error-text"></div>
+          </div>
 
-        <main class="content-right">
-            
-            <div class="top-stats-bar">
-                <div class="stat-mini-card">
-                    <div class="stat-info">
-                        <span class="stat-label">Tổng Mặt Hàng</span>
-                        <span class="stat-value" id="total-count">0</span>
-                    </div>
-                    <i class="fa-solid fa-box stat-icon-bg"></i>
-                </div>
-                <div class="stat-mini-card">
-                    <div class="stat-info">
-                        <span class="stat-label">Doanh Tư Khác</span>
-                        <span class="stat-value text-blue" id="total-value">0 đ</span>
-                    </div>
-                    <i class="fa-solid fa-money-bill-trend-up stat-icon-bg"></i>
-                </div>
-                <div class="stat-mini-card">
-                    <div class="stat-info">
-                        <span class="stat-label">Thanh Toán Điện Tử</span>
-                        <span class="stat-value text-green" id="total-revenue">0 đ</span>
-                    </div>
-                    <i class="fa-solid fa-circle-dollar-to-slot stat-icon-bg"></i>
-                </div>
+          <div class="management-card">
+            <div class="card-header-row">
+              <input
+                type="text"
+                id="search-input"
+                placeholder="🔍 Lọc tìm kiếm sản phẩm nhanh..."
+                style="width: 100%"
+              />
             </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th width="8%">ID</th>
+                    <th width="42%">Tên Sản Phẩm Công Nghệ</th>
+                    <th width="20%">Đơn Giá</th>
+                    <th width="15%">Trạng Thái</th>
+                    <th width="15%">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="product-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
-            <section id="tab-orders" class="dashboard-section active-section">
-                <div class="management-card">
-                    <div class="gcp-filter-container">
-                        <div class="filter-row-inputs">
-                            <select class="gcp-select"><option>Tất cả trạng thái</option></select>
-                            <select class="gcp-select"><option>Tất cả danh mục</option></select>
-                            <input type="text" id="search-order" placeholder="Tìm kiếm mã đơn hoặc tên sản phẩm..." />
-                        </div>
-                    </div>
-                    
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th width="15%">THỜI GIAN</th>
-                                    <th width="40%">MẶT HÀNG</th>
-                                    <th width="10%">SL</th>
-                                    <th width="15%">ĐƠN GIÁ</th>
-                                    <th width="20%">THAO TÁC</th>
-                                </tr>
-                            </thead>
-                            <tbody id="order-tbody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
+        <section id="tab-inventory" class="dashboard-section">
+          <div class="management-card">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th width="8%">ID</th>
+                    <th width="42%">Tên Sản Phẩm Trong Kho</th>
+                    <th width="15%">Số Lượng Tồn Kho</th>
+                    <th width="15%">Giá Trị Tồn</th>
+                    <th width="20%">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="inventory-tbody"></tbody>
+              </table>
+            </div>
+          </div>
 
-            <section id="tab-products" class="dashboard-section">
-                <div class="management-card" style="margin-bottom: 2rem;">
-                    <h3><i class="fa-solid fa-circle-plus color-green"></i> Tạo Mặt Hàng Mới Lên Hệ Thống</h3>
-                    <div class="form-group">
-                        <input type="text" id="product-name" placeholder="Tên sản phẩm thiết bị cần thêm..." />
-                        <input type="number" id="product-price" placeholder="Giá niêm yết (VNĐ)..." />
-                        <input type="number" id="product-quantity" placeholder="Số lượng nhập kho..." />
-                        <button id="add-btn" class="primary-btn"><i class="fa-solid fa-plus"></i> Thêm Mặt Hàng</button>
-                    </div>
-                    <div id="error-message" class="error-text"></div>
-                </div>
+          <div class="management-card" style="margin-top: 2rem">
+            <h3>
+              <i class="fa-solid fa-trash-can text-danger"></i> Nhật Ký Sản Phẩm
+              Đã Hủy
+            </h3>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th width="50%">Tên Sản Phẩm Đã Hủy</th>
+                    <th width="30%">Đơn Giá Lúc Xóa</th>
+                    <th width="20%">Số Lượng</th>
+                  </tr>
+                </thead>
+                <tbody id="deleted-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
-                <div class="management-card">
-                    <div class="card-header-row">
-                        <input type="text" id="search-input" placeholder="🔍 Lọc tìm kiếm sản phẩm nhanh..." style="width: 100%;" />
-                    </div>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th width="8%">ID</th>
-                                    <th width="42%">Tên Sản Phẩm Công Nghệ</th>
-                                    <th width="20%">Đơn Giá</th>
-                                    <th width="15%">Trạng Thái</th>
-                                    <th width="15%">Thao Tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="product-tbody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <section id="tab-inventory" class="dashboard-section">
-                <div class="management-card">
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th width="8%">ID</th>
-                                    <th width="42%">Tên Sản Phẩm Trong Kho</th>
-                                    <th width="15%">Số Lượng Tồn Kho</th>
-                                    <th width="15%">Giá Trị Tồn</th>
-                                    <th width="20%">Thao Tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventory-tbody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="management-card" style="margin-top: 2rem;">
-                    <h3><i class="fa-solid fa-trash-can text-danger"></i> Nhật Ký Sản Phẩm Đã Hủy</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th width="50%">Tên Sản Phẩm Đã Hủy</th> 
-                                    <th width="30%">Đơn Giá Lúc Xóa</th>
-                                    <th width="20%">Số Lượng</th>
-                                </tr>
-                            </thead>
-                            <tbody id="deleted-tbody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <section id="tab-reports" class="dashboard-section">
-                <div class="gcp-report-grid">
-                    <div class="report-box-card" onclick="switchDashboardTab('orders')">
-                        <i class="fa-solid fa-clock-history report-icon"></i>
-                        <h4>Giao Ca</h4>
-                        <p>Báo cáo lịch sử và doanh thu các lần giao ca</p>
-                    </div>
-                    <div class="report-box-card" onclick="switchDashboardTab('orders')">
-                        <i class="fa-solid fa-chart-line report-icon"></i>
-                        <h4>Đơn Hàng</h4>
-                        <p>Báo cáo chi tiết số lượng và doanh thu theo từng đơn hàng</p>
-                    </div>
-                    <div class="report-box-card" onclick="switchDashboardTab('products')">
-                        <i class="fa-solid fa-cubes report-icon"></i>
-                        <h4>Mặt Hàng</h4>
-                        <p>Báo cáo số lượng và doanh thu trên từng mặt hàng</p>
-                    </div>
-                    <div class="report-box-card">
-                        <i class="fa-solid fa-flask report-icon"></i>
-                        <h4>Nguyên Liệu</h4>
-                        <p>Báo cáo số lượng nguyên liệu đã được sử dụng</p>
-                    </div>
-                    <div class="report-box-card">
-                        <i class="fa-solid fa-truck-ramp-box report-icon"></i>
-                        <h4>Nhập / Xuất Kho</h4>
-                        <p>Báo cáo lịch sử nhập kho và điều chỉnh kho</p>
-                    </div>
-                    <div class="report-box-card" onclick="switchDashboardTab('inventory')">
-                        <i class="fa-solid fa-box-archive report-icon"></i>
-                        <h4>Tồn Kho</h4>
-                        <p>Báo cáo lịch sử tồn kho đầu kỳ và cuối kỳ chi tiết</p>
-                    </div>
-                    <div class="report-box-card">
-                        <i class="fa-solid fa-users report-icon"></i>
-                        <h4>Khách hàng <span class="badge-new-tag">NEW</span></h4>
-                        <p>Xem danh sách tài khoản thành viên hệ thống</p>
-                    </div>
-                    <div class="report-box-card">
-                        <i class="fa-solid fa-file-export report-icon"></i>
-                        <h4>Xuất Báo Cáo</h4>
-                        <p>Xem lịch sử và tải về tập tin báo cáo đã xuất</p>
-                    </div>
-                </div>
-            </section>
-            
-        </main>
+        <section id="tab-reports" class="dashboard-section">
+          <div class="gcp-report-grid">
+            <div class="report-box-card" onclick="switchDashboardTab('orders')">
+              <i class="fa-solid fa-clock-history report-icon"></i>
+              <h4>Giao Ca</h4>
+              <p>Báo cáo lịch sử và doanh thu các lần giao ca</p>
+            </div>
+            <div class="report-box-card" onclick="switchDashboardTab('orders')">
+              <i class="fa-solid fa-chart-line report-icon"></i>
+              <h4>Đơn Hàng</h4>
+              <p>Báo cáo chi tiết số lượng và doanh thu theo từng đơn hàng</p>
+            </div>
+            <div
+              class="report-box-card"
+              onclick="switchDashboardTab('products')"
+            >
+              <i class="fa-solid fa-cubes report-icon"></i>
+              <h4>Mặt Hàng</h4>
+              <p>Báo cáo số lượng và doanh thu trên từng mặt hàng</p>
+            </div>
+            <div class="report-box-card">
+              <i class="fa-solid fa-flask report-icon"></i>
+              <h4>Nguyên Liệu</h4>
+              <p>Báo cáo số lượng nguyên liệu đã được sử dụng</p>
+            </div>
+            <div class="report-box-card">
+              <i class="fa-solid fa-truck-ramp-box report-icon"></i>
+              <h4>Nhập / Xuất Kho</h4>
+              <p>Báo cáo lịch sử nhập kho và điều chỉnh kho</p>
+            </div>
+            <div
+              class="report-box-card"
+              onclick="switchDashboardTab('inventory')"
+            >
+              <i class="fa-solid fa-box-archive report-icon"></i>
+              <h4>Tồn Kho</h4>
+              <p>Báo cáo lịch sử tồn kho đầu kỳ và cuối kỳ chi tiết</p>
+            </div>
+            <div class="report-box-card">
+              <i class="fa-solid fa-users report-icon"></i>
+              <h4>Khách hàng <span class="badge-new-tag">NEW</span></h4>
+              <p>Xem danh sách tài khoản thành viên hệ thống</p>
+            </div>
+            <div class="report-box-card">
+              <i class="fa-solid fa-file-export report-icon"></i>
+              <h4>Xuất Báo Cáo</h4>
+              <p>Xem lịch sử và tải về tập tin báo cáo đã xuất</p>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
 
     <div id="quantity-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-title">Xác Nhận Số Lượng Thao Tác</h3>
-                <button class="close-modal-btn" onclick="document.getElementById('quantity-modal').classList.remove('open')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p id="modal-product-info">Sản phẩm chọn: <span id="modal-p-name" class="highlight-text" style="color: #0066cc;">...</span></p>
-                <p id="modal-stock-info" style="color: #64748b; font-size: 0.9rem;">Số lượng hiện có trong kho: <span id="modal-p-stock" style="color: #1e293b; font-weight: 600;">0</span></p>
-                
-                <div style="margin-top: 1.25rem;">
-                    <label for="modal-quantity-input" style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 0.5rem; font-weight: 700;">NHẬP SỐ LƯỢNG THỰC HIỆN:</label>
-                    <input type="number" id="modal-quantity-input" min="1" value="1" style="width: 100%;" />
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="document.getElementById('quantity-modal').classList.remove('open')">Hủy Bỏ</button>
-                <button id="modal-confirm-btn" style="color: white; border: none; padding: 0.75rem 1.25rem; border-radius: 8px; font-weight: 600; cursor: pointer;">Xác Nhận Hệ Thống</button>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-title">Xác Nhận Số Lượng Thao Tác</h3>
+          <button
+            class="close-modal-btn"
+            onclick="
+              document.getElementById('quantity-modal').classList.remove('open')
+            "
+          >
+            &times;
+          </button>
         </div>
+        <div class="modal-body">
+          <p id="modal-product-info">
+            Sản phẩm chọn:
+            <span
+              id="modal-p-name"
+              class="highlight-text"
+              style="color: #0066cc"
+              >...</span
+            >
+          </p>
+          <p id="modal-stock-info" style="color: #64748b; font-size: 0.9rem">
+            Số lượng hiện có trong kho:
+            <span id="modal-p-stock" style="color: #1e293b; font-weight: 600"
+              >0</span
+            >
+          </p>
+
+          <div style="margin-top: 1.25rem">
+            <label
+              for="modal-quantity-input"
+              style="
+                font-size: 0.8rem;
+                color: #64748b;
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 700;
+              "
+              >NHẬP SỐ LƯỢNG THỰC HIỆN:</label
+            >
+            <input
+              type="number"
+              id="modal-quantity-input"
+              min="1"
+              value="1"
+              style="width: 100%"
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-secondary"
+            onclick="
+              document.getElementById('quantity-modal').classList.remove('open')
+            "
+          >
+            Hủy Bỏ
+          </button>
+          <button
+            id="modal-confirm-btn"
+            style="
+              color: white;
+              border: none;
+              padding: 0.75rem 1.25rem;
+              border-radius: 8px;
+              font-weight: 600;
+              cursor: pointer;
+            "
+          >
+            Xác Nhận Hệ Thống
+          </button>
+        </div>
+      </div>
     </div>
 
     <script>
-        function switchDashboardTab(tabName) {
-            document.querySelectorAll('.dashboard-section').forEach(sec => {
-                sec.classList.remove('active-section');
-            });
-            const targetSection = document.getElementById('tab-' + tabName);
-            if (targetSection) {
-                targetSection.classList.add('active-section');
-            }
-            
-            document.querySelectorAll('.menu-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            const activeBtn = document.getElementById('btn-tab-' + tabName);
-            if (activeBtn) {
-                activeBtn.classList.add('active');
-            }
+      function switchDashboardTab(tabName) {
+        document.querySelectorAll(".dashboard-section").forEach((sec) => {
+          sec.classList.remove("active-section");
+        });
+        const targetSection = document.getElementById("tab-" + tabName);
+        if (targetSection) {
+          targetSection.classList.add("active-section");
         }
+
+        document.querySelectorAll(".menu-btn").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+        const activeBtn = document.getElementById("btn-tab-" + tabName);
+        if (activeBtn) {
+          activeBtn.classList.add("active");
+        }
+      }
     </script>
 
     <script type="py" src="./main.py"></script>
-</body>
+  </body>
 </html>
